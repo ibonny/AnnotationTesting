@@ -1,7 +1,6 @@
 package com.personal.ibonny.JSoupHandler;
 
 import org.apache.http.HttpEntity;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -9,44 +8,39 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.util.List;
 import java.util.Scanner;
 
 public class JSoupHandler {
-    public static <T> T loadData(Class<T> input) throws NotJSoupObjectException {
-        if (input.isAnnotationPresent(JSoupProcessor.class) == false) {
-            throw new NotJSoupObjectException();
-        }
+    private static String loadFromFileOrURL(String name) {
+        String data = "";
 
-        String filename = input.getAnnotation(JSoupProcessor.class).value();
-
-        Document doc;
-
-        if (filename.startsWith("http")) {
+        if (name.startsWith("http")) {
             CloseableHttpClient httpClient = HttpClients.createDefault();
 
             try {
-                HttpGet request = new HttpGet(filename);
+                HttpGet request = new HttpGet(name);
 
                 CloseableHttpResponse response = httpClient.execute(request);
 
                 HttpEntity entity = response.getEntity();
 
-                String result = EntityUtils.toString(entity);
-
-                doc = Jsoup.parse(result, "", Parser.xmlParser());
+                data = EntityUtils.toString(entity);
             } catch (IOException e) {
                 e.printStackTrace();
 
                 return null;
             }
         } else {
-            File inFile = new File(filename);
+            File inFile = new File(name);
 
             Scanner s;
 
@@ -60,12 +54,30 @@ public class JSoupHandler {
                 return null;
             }
 
-            doc = Jsoup.parse(s.next(), "", Parser.xmlParser());
+            data = s.next();
         }
+
+        return data;
+    }
+
+    public static <T> T loadData(String baseSelector, String data, Class<T> input) throws NotJSoupObjectException {
+        if (input.isAnnotationPresent(JSoupProcessor.class) == false && baseSelector.equals("")) {
+            throw new NotJSoupObjectException();
+        }
+
+        if (baseSelector == null || baseSelector.equals("")) {
+            String filename = input.getAnnotation(JSoupProcessor.class).value();
+
+            data = loadFromFileOrURL(filename);
+        }
+
+        Document doc = Jsoup.parse(data, "", Parser.xmlParser());
 
         T po;
 
         try {
+            System.out.println(input);
+
             po = input.getDeclaredConstructor().newInstance();
         } catch(Exception e) {
             e.printStackTrace();
@@ -73,9 +85,15 @@ public class JSoupHandler {
             return null;
         }
 
-        for (Field f: po.getClass().getDeclaredFields()) {
-            System.out.println(f.getName());
+        Element baseElement;
 
+        if (baseSelector != null) {
+            baseElement = doc.select(baseSelector).first();
+        } else {
+            baseElement = doc;
+        }
+
+        for (Field f: po.getClass().getDeclaredFields()) {
             if (f.isAnnotationPresent(JSoupSelector.class) == false) {
                 continue;
             }
@@ -85,7 +103,7 @@ public class JSoupHandler {
             String value;
 
             try {
-                value = doc.select(indexValue).first().text();
+                value = baseElement.select(indexValue).first().text();
             } catch(NullPointerException npe) {
                 // If you don't find the field, skip it.
 
@@ -135,6 +153,18 @@ public class JSoupHandler {
                     f.set(po, floatValue);
                 } catch(IllegalAccessException iae) {
                     System.out.println(iae.getMessage());
+                }
+            }
+
+            if (f.getType() == List.class) {
+                //                System.out.println("OK, we're here.");
+
+                System.out.println(((ParameterizedType) f.getGenericType()).getActualTypeArguments()[0]);
+
+                for (Element ele: baseElement.select(indexValue)) {
+                    System.out.println(ele);
+
+                    Object o = loadData(indexValue, ele.toString(), ((ParameterizedType) f.getGenericType()).getActualTypeArguments()[0].getClass());
                 }
             }
         }

@@ -11,7 +11,7 @@ public class MainClass {
         PersonalObject po;
 
         try {
-            po = loadData(PersonalObject.class);
+            po = loadData(null, "", PersonalObject.class);
         } catch (NotJSoupObjectException e) {
             e.printStackTrace();
 

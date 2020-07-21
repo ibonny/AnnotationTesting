@@ -3,6 +3,8 @@ package com.personal.ibonny;
 import com.personal.ibonny.JSoupHandler.JSoupProcessor;
 import com.personal.ibonny.JSoupHandler.JSoupSelector;
 
+import java.util.List;
+
 //@JSoupProcessor("testout.xml")
 @JSoupProcessor("https://www.w3schools.com/xml/plant_catalog.xml")
 public class PersonalObject {
@@ -12,19 +14,14 @@ public class PersonalObject {
     @JSoupSelector("first fifth")
     private int fifth;
 
+    @JSoupSelector("CATALOG PLANT")
+    private List<Plant> plants;
+
     public String getFourth() {
         return fourth;
     }
 
-    public void setFourth(String fourth) {
-        this.fourth = fourth;
-    }
-
     public int getFifth() {
         return fifth;
-    }
-
-    public void setFifth(int fifth) {
-        this.fifth = fifth;
     }
 }
