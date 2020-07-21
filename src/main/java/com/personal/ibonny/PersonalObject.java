@@ -6,7 +6,7 @@ import com.personal.ibonny.JSoupHandler.JSoupSelector;
 //@JSoupProcessor("testout.xml")
 @JSoupProcessor("https://www.w3schools.com/xml/plant_catalog.xml")
 public class PersonalObject {
-    @JSoupSelector("CATALOG PLANT")
+    @JSoupSelector("CATALOG PLANT:nth-child(2) COMMON")
     private String fourth;
 
     @JSoupSelector("first fifth")

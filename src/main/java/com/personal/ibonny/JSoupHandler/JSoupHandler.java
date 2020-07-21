@@ -74,63 +74,67 @@ public class JSoupHandler {
         }
 
         for (Field f: po.getClass().getDeclaredFields()) {
-            if (f.isAnnotationPresent(JSoupSelector.class)) {
-                String indexValue = f.getAnnotation(JSoupSelector.class).value();
+            System.out.println(f.getName());
 
-                String value;
+            if (f.isAnnotationPresent(JSoupSelector.class) == false) {
+                continue;
+            }
 
+            String indexValue = f.getAnnotation(JSoupSelector.class).value();
+
+            String value;
+
+            try {
+                value = doc.select(indexValue).first().text();
+            } catch(NullPointerException npe) {
+                // If you don't find the field, skip it.
+
+                continue;
+            }
+
+            f.setAccessible(true);
+
+            if (f.getType() == String.class) {
                 try {
-                    value = doc.select(indexValue).first().text();
-                } catch(NullPointerException npe) {
-                    npe.printStackTrace();
-
-                    return null;
+                    f.set(po, value);
+                } catch(IllegalAccessException iae) {
+                    System.out.println(iae.getMessage());
                 }
 
-                f.setAccessible(true);
+                continue;
+            }
 
-                if (f.getType() == String.class) {
-                    try {
-                        f.set(po, value);
-                    } catch(IllegalAccessException iae) {
-                        System.out.println(iae.getMessage());
-                    }
+            if (f.getType() == int.class || f.getType() == Integer.class) {
+                try {
+                    int intValue = Integer.parseInt(value);
 
-                    continue;
+                    f.set(po, intValue);
+                } catch(IllegalAccessException iae) {
+                    System.out.println(iae.getMessage());
                 }
 
-                if (f.getType() == int.class || f.getType() == Integer.class) {
-                    try {
-                        int intValue = Integer.parseInt(value);
+                continue;
+            }
 
-                        f.set(po, intValue);
-                    } catch(IllegalAccessException iae) {
-                        System.out.println(iae.getMessage());
-                    }
+            if (f.getType() == double.class || f.getType() == Double.class) {
+                try {
+                    double doubleValue = Double.parseDouble(value);
 
-                    continue;
+                    f.set(po, doubleValue);
+                } catch(IllegalAccessException iae) {
+                    System.out.println(iae.getMessage());
                 }
 
-                if (f.getType() == double.class || f.getType() == Double.class) {
-                    try {
-                        double doubleValue = Double.parseDouble(value);
+                continue;
+            }
 
-                        f.set(po, doubleValue);
-                    } catch(IllegalAccessException iae) {
-                        System.out.println(iae.getMessage());
-                    }
+            if (f.getType() == float.class || f.getType() == Float.class) {
+                try {
+                    float floatValue = Float.parseFloat(value);
 
-                    continue;
-                }
-
-                if (f.getType() == float.class || f.getType() == Float.class) {
-                    try {
-                        float floatValue = Float.parseFloat(value);
-
-                        f.set(po, floatValue);
-                    } catch(IllegalAccessException iae) {
-                        System.out.println(iae.getMessage());
-                    }
+                    f.set(po, floatValue);
+                } catch(IllegalAccessException iae) {
+                    System.out.println(iae.getMessage());
                 }
             }
         }
