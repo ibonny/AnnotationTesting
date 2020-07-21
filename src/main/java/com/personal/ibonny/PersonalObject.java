@@ -1,8 +1,12 @@
 package com.personal.ibonny;
 
-@JSoupProcessor("testout.xml")
+import com.personal.ibonny.JSoupHandler.JSoupProcessor;
+import com.personal.ibonny.JSoupHandler.JSoupSelector;
+
+//@JSoupProcessor("testout.xml")
+@JSoupProcessor("https://www.w3schools.com/xml/plant_catalog.xml")
 public class PersonalObject {
-    @JSoupSelector("first second third fourth")
+    @JSoupSelector("CATALOG PLANT")
     private String fourth;
 
     @JSoupSelector("first fifth")
